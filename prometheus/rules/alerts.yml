@@ -1,0 +1,34 @@
+groups:
+  - name: devops_app_alerts
+    interval: 15s
+    rules:
+      - alert: HighErrorRate
+        expr: rate(app_errors_total[1m]) * 60 > 5
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CRITICAL – High error rate on {{ $labels.endpoint }}"
+          description: >
+            Error rate is {{ $value | printf "%.2f" }} errors/min on
+            endpoint {{ $labels.endpoint }} (threshold: 5/min).
+
+      - alert: ElevatedErrorRate
+        expr: rate(app_errors_total[1m]) * 60 > 2
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "WARNING – Elevated error rate on {{ $labels.endpoint }}"
+          description: >
+            Error rate is {{ $value | printf "%.2f" }} errors/min on
+            endpoint {{ $labels.endpoint }}.
+
+      - alert: AppDown
+        expr: up{job="devops-app"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "CRITICAL – devops-app is unreachable"
+          description: "Prometheus cannot scrape devops-app:5000."

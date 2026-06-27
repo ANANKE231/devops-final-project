@@ -1,0 +1,99 @@
+---
+# ============================================================
+#  Ansible Playbook: Environment Setup (IaC)
+#  Run with:  ansible-playbook -i inventory.ini setup.yml
+# ============================================================
+
+- name: Provision DevOps Demo App Environment
+  hosts: localhost
+  connection: local
+  become: false
+  vars:
+    app_dir: "{{ playbook_dir }}/.."
+    deploy_dir: "/opt/devops-demo"
+    blue_port: 5001
+    green_port: 5002
+    log_dir: "/var/log/devops-demo"
+    python_version: "3.11"
+
+  tasks:
+    # ── System packages ────────────────────────────────────
+    - name: Ensure pip is available
+      ansible.builtin.command: python3 -m ensurepip --upgrade
+      changed_when: false
+
+    - name: Install Python dependencies
+      ansible.builtin.pip:
+        requirements: "{{ app_dir }}/requirements.txt"
+        extra_args: "--user"
+
+    # ── Directory structure ────────────────────────────────
+    - name: Create deployment directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ deploy_dir }}"
+        - "{{ deploy_dir }}/blue"
+        - "{{ deploy_dir }}/green"
+        - "{{ deploy_dir }}/releases"
+        - "{{ log_dir }}"
+
+    - name: Copy app to blue slot
+      ansible.builtin.copy:
+        src: "{{ app_dir }}/app/"
+        dest: "{{ deploy_dir }}/blue/"
+        mode: '0644'
+
+    - name: Copy app to green slot
+      ansible.builtin.copy:
+        src: "{{ app_dir }}/app/"
+        dest: "{{ deploy_dir }}/green/"
+        mode: '0644'
+
+    # ── Config files ───────────────────────────────────────
+    - name: Write blue slot environment config
+      ansible.builtin.copy:
+        dest: "{{ deploy_dir }}/blue/.env"
+        content: |
+          APP_ENV=production
+          APP_VERSION=blue
+          PORT={{ blue_port }}
+        mode: '0600'
+
+    - name: Write green slot environment config
+      ansible.builtin.copy:
+        dest: "{{ deploy_dir }}/green/.env"
+        content: |
+          APP_ENV=production
+          APP_VERSION=green
+          PORT={{ green_port }}
+        mode: '0600'
+
+    # ── Active slot tracking ───────────────────────────────
+    - name: Write initial active-slot file (blue is live)
+      ansible.builtin.copy:
+        dest: "{{ deploy_dir }}/active_slot"
+        content: "blue\n"
+        mode: '0644'
+
+    # ── Scripts ────────────────────────────────────────────
+    - name: Copy deployment scripts
+      ansible.builtin.copy:
+        src: "{{ app_dir }}/scripts/{{ item }}"
+        dest: "{{ deploy_dir }}/{{ item }}"
+        mode: '0755'
+      loop:
+        - deploy.sh
+        - rollback.sh
+        - health_check.sh
+
+    - name: Setup complete — print summary
+      ansible.builtin.debug:
+        msg:
+          - "✅  Environment ready at {{ deploy_dir }}"
+          - "🔵  Blue  slot → port {{ blue_port }}"
+          - "🟢  Green slot → port {{ green_port }}"
+          - "📋  Logs  dir  → {{ log_dir }}"
+          - "Run: bash {{ deploy_dir }}/deploy.sh <version>"
