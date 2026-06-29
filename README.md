@@ -192,13 +192,27 @@ bash scripts/rollback.sh         # rollback instantly
 
 ## Screenshots
 
-> Add screenshots here demonstrating:
-> - CI/CD pipeline passing (including security scan jobs)
-> - Grafana dashboard with live metrics
-> - Grafana alert in "Firing" state
-> - Loki log explorer showing JSON logs
-> - Trivy / gitleaks scan output
+### CI/CD pipeline passing (including security scan jobs)
+![CI/CD Pipeline](docs/ci-cd-pipeline.png)
 
+### App running
+![App Running](docs/app-running.png)
+
+### Grafana dashboard with live metrics
+![Grafana Dashboard](docs/grafana-dashboard.png)
+
+### Grafana alert in "Firing" state
+![Alert Firing](docs/alert-firing.png)
+
+### Loki log explorer showing JSON logs
+![Loki Logs](docs/loki-logs.png)
+![Loki Logs 2](docs/loki-logs-2.png)
+
+### Prometheus metrics
+![Prometheus Metrics](docs/prometheus-metrics.png)
+
+### Trivy / gitleaks scan output
+![Security Scan](docs/security-scan.png)
 ---
 
 ## API
